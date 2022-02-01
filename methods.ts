@@ -206,7 +206,7 @@ export const session_db_init = ( liwe: ILiWE, cback: LCback = null ): Promise<bo
 		_coll_sessions = await collection_init( liwe.db, COLL_SESSIONS, [
 			{ type: "persistent", fields: [ "key" ], unique: true },
 			{ type: "persistent", fields: [ "domain" ], unique: false },
-		], false );
+		] );
 
 		/*=== d2r_start session_db_init ===*/
 
