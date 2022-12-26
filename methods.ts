@@ -1,7 +1,6 @@
 
 import { ILRequest, ILResponse, LCback, ILiweConfig, ILError, ILiWE } from '../../liwe/types';
 import { mkid } from '../../liwe/utils';
-import { collection_add, collection_find_all, collection_find_one, collection_init, prepare_filters } from '../../liwe/arangodb';
 import { DocumentCollection } from 'arangojs/collection';
 
 import {
@@ -17,6 +16,8 @@ const COLL_SESSIONS = "sessions";
 /*=== d2r_start __file_header === */
 import { get_real_ip } from '../../liwe/defender';
 import { md5 } from '../../liwe/utils';
+import { adb_query_one, adb_record_add, adb_find_one, adb_find_all, adb_query_all, adb_prepare_filters } from '../../liwe/db/arango';
+import { collection_init } from '../../liwe/arangodb';
 
 const _session_key = ( req: ILRequest, session_id: string ) => {
 	console.log( "SESSION KEY - REAL IP: ", get_real_ip( req ), session_id );
@@ -35,8 +36,8 @@ const _session_key = ( req: ILRequest, session_id: string ) => {
 export const get_session_admin_list = ( req: ILRequest, domain?: string, cback: LCback = null ): Promise<Session[]> => {
 	return new Promise( async ( resolve, reject ) => {
 		/*=== d2r_start get_session_admin_list ===*/
-		const [ filters, values ] = prepare_filters( 'session', { domain } );
-		const sessions: Session[] = await collection_find_all( req.db, `FOR session IN ${ COLL_SESSIONS } ${ filters } RETURN session`, values );
+		const [ filters, values ] = adb_prepare_filters( 'session', { domain } );
+		const sessions: Session[] = await adb_query_all( req.db, `FOR session IN ${ COLL_SESSIONS } ${ filters } RETURN session`, values );
 
 		return cback ? cback( null, sessions ) : resolve( sessions );
 		/*=== d2r_end get_session_admin_list ===*/
@@ -86,7 +87,7 @@ export const session_create = ( req: ILRequest, session_key: string, domain: str
 		/*=== d2r_start session_create ===*/
 		await session_del( req, session_key );
 
-		await collection_add( _coll_sessions, { key: session_key, domain, data } );
+		await adb_record_add( req.db, COLL_SESSIONS, { key: session_key, domain, data } );
 
 		return cback ? cback( null, true ) : resolve( true );
 		/*=== d2r_end session_create ===*/
@@ -104,7 +105,7 @@ export const session_create = ( req: ILRequest, session_key: string, domain: str
 export const session_get = ( req: ILRequest, session_key: string, full: boolean = false, cback: LCback = null ): Promise<any> => {
 	return new Promise( async ( resolve, reject ) => {
 		/*=== d2r_start session_get ===*/
-		const res = await collection_find_one( req.db, "FOR u IN sessions FILTER u.key == @key RETURN u", { key: session_key } );
+		const res = await adb_query_one( req.db, "FOR u IN sessions FILTER u.key == @key RETURN u", { key: session_key } );
 
 		if ( !res ) return cback ? cback( null, null ) : resolve( null );
 
@@ -143,7 +144,7 @@ export const session_del = ( req: ILRequest, session_key: string, cback: LCback 
 export const session_remove_all = ( req: ILRequest, session_id: string, cback: LCback = null ): Promise<boolean> => {
 	return new Promise( async ( resolve, reject ) => {
 		/*=== d2r_start session_remove_all ===*/
-		const sess: { _id: string, key: string; }[] = await collection_find_all( req.db, `FOR s IN sessions RETURN { _id: s._id, key: s.key }` );
+		const sess: { _id: string, key: string; }[] = await adb_query_all( req.db, `FOR s IN sessions RETURN { _id: s._id, key: s.key }` );
 		await Promise.all( sess.map( async ( s ) => {
 			if ( s.key.indexOf( session_id ) != -1 )
 				await _coll_sessions.remove( s._id );
@@ -187,7 +188,7 @@ export const session_set_val = ( req: ILRequest, key: string, val: string, cback
 
 		sess.data[ key ] = val;
 
-		sess = await collection_add( _coll_sessions, sess, false, SessionKeys );
+		sess = await adb_record_add( req.db, COLL_SESSIONS, sess, SessionKeys );
 
 		return cback ? cback( null, sess ) : resolve( sess );
 		/*=== d2r_end session_set_val ===*/
