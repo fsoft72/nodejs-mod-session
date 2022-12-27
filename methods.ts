@@ -16,8 +16,7 @@ const COLL_SESSIONS = "sessions";
 /*=== d2r_start __file_header === */
 import { get_real_ip } from '../../liwe/defender';
 import { md5 } from '../../liwe/utils';
-import { adb_query_one, adb_record_add, adb_find_one, adb_find_all, adb_query_all, adb_prepare_filters } from '../../liwe/db/arango';
-import { collection_init } from '../../liwe/arangodb';
+import { adb_query_one, adb_record_add, adb_find_one, adb_find_all, adb_query_all, adb_prepare_filters, adb_collection_init } from '../../liwe/db/arango';
 
 const _session_key = ( req: ILRequest, session_id: string ) => {
 	console.log( "SESSION KEY - REAL IP: ", get_real_ip( req ), session_id );
@@ -205,7 +204,7 @@ export const session_db_init = ( liwe: ILiWE, cback: LCback = null ): Promise<bo
 	return new Promise( async ( resolve, reject ) => {
 		_liwe = liwe;
 
-		_coll_sessions = await collection_init( liwe.db, COLL_SESSIONS, [
+		_coll_sessions = await adb_collection_init( liwe.db, COLL_SESSIONS, [
 			{ type: "persistent", fields: [ "key" ], unique: true },
 			{ type: "persistent", fields: [ "domain" ], unique: false },
 		] );
