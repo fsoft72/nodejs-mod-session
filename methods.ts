@@ -1,7 +1,7 @@
 
 import { ILRequest, ILResponse, LCback, ILiweConfig, ILError, ILiWE } from '../../liwe/types';
 import { mkid } from '../../liwe/utils';
-import { DocumentCollection } from 'arangojs/collection';
+import { DocumentCollection } from 'arangojs/collections';
 
 import {
 	Session, SessionKeys, SessionData, SessionDataKeys
