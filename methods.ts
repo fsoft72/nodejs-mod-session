@@ -196,11 +196,11 @@ export const session_get = async ( req: ILRequest, session_key: string, full: bo
 	/*=== f2c_start session_get ===*/
 	const res = await adb_query_one( req.db, "FOR u IN sessions FILTER u.key == @key RETURN u", { key: session_key } );
 
-	if ( !res ) return responseSuccess( null );
+	if ( !res ) return null;
 
-	if ( full ) return responseSuccess( res );
+	if ( full ) return res;
 
-	return responseSuccess( res.data );
+	return res.data;
 	/*=== f2c_end session_get ===*/
 };
 // }}}
